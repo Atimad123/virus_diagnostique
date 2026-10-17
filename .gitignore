@@ -1,0 +1,32 @@
+# Environnements virtuels
+venv/
+env/
+.venv/
+ENV/
+
+# Caches Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Modèles entraînés (lourds, à ne pas versionner)
+*.pkl
+*.joblib
+*.h5
+*.pt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
