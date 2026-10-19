@@ -1,12 +1,11 @@
 # main.py
 
 import joblib
-from pathlib import Path
-
 from core.dataset import DatasetLoader
 from pipeline.trainer import Trainer
 from pipeline.evaluator import Evaluator
-from pipeline.interface_clinique import ClinicalPredictor
+from core.predictor import ClinicalPredictor  # <-- IMPORT CORRIGÉ ICI
+from core.logistic_regression import LogisticRegressionModel
 
 
 if __name__ == "__main__":
@@ -41,6 +40,7 @@ if __name__ == "__main__":
 
     evaluator = Evaluator(trainer.model, trainer.preprocessor)
     evaluator.evaluate(X_test, y_test)
+
     # =====================================================
     # PARTIE 4 : Prédiction clinique pour un patient
     # =====================================================
@@ -48,48 +48,35 @@ if __name__ == "__main__":
     print("ÉTAPE 4 : Diagnostic d'un nouveau patient")
     print("=" * 60)
 
-    from core.logistic_regression import LogisticRegressionModel
-    import joblib
-
-    # Charger le modèle et le preprocessor sauvegardés
     modele_charge = LogisticRegressionModel()
     modele_charge.load("models/model.pkl")
     preprocessor_charge = joblib.load("models/preprocessor.pkl")
 
+    # Instanciation du prédicteur depuis core
     predictor = ClinicalPredictor(modele_charge, preprocessor_charge)
 
-    # Patient : les clés DOIVENT correspondre exactement aux colonnes du CSV
-    patient = {
+    # Patient avec fièvre + symptômes (fever est BINAIRE : 1=fièvre, 0=pas de fièvre)
+    patient_malade = {
         "age": 45,
-        "fever": 39.2,
-        "cough": 1,
-        "fatigue": 1,
+        "fever": 1,        # a de la fièvre
+        "cough": 1,        # tousse
+        "fatigue": 1,      # est fatigué
     }
 
-    # Prédire la probabilité
-    proba = predictor.diagnose(patient)
-
-    # La condition est dans main.py (selon la consigne de la prof)
-    if proba >= 0.5:
-        diagnostic = "Infecté"
-    else:
-        diagnostic = "Sain"
-
-    print(f"\nPatient : {patient}")
-    print(f"Probabilité d'infection : {proba:.2%}")
-    print(f"Diagnostic : {diagnostic}")
-
-    # --- Bonus : tester un patient sain pour comparaison ---
+    # Patient sain (pas de fièvre, pas de symptômes)
     patient_sain = {
         "age": 30,
-        "fever": 36.8,
-        "cough": 0,
-        "fatigue": 0,
+        "fever": 0,        # pas de fièvre
+        "cough": 0,        # ne tousse pas
+        "fatigue": 0,      # pas fatigué
     }
 
-    proba_sain = predictor.diagnose(patient_sain)
-    diagnostic_sain = "Infecté" if proba_sain >= 0.5 else "Sain"
+    for label, patient in [("Patient malade", patient_malade),
+                            ("Patient sain", patient_sain)]:
+        proba = predictor.diagnose(patient)
+        # La condition métier est bien dans main.py, comme demandé par votre prof
+        diagnostic = "Infecté" if proba >= 0.5 else "Sain"
 
-    print(f"\nPatient sain : {patient_sain}")
-    print(f"Probabilité d'infection : {proba_sain:.2%}")
-    print(f"Diagnostic : {diagnostic_sain}")
+        print(f"\n{label} : {patient}")
+        print(f"Probabilité d'infection : {proba:.2%}")
+        print(f"Diagnostic : {diagnostic}")
